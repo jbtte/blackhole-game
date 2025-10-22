@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buraco Negro - O Jogo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Buraco Negro</h1>
+        <p>Preencha os 21 círculos com os números de 1 a 10 (2x o 1-10 e um 1) para descobrir o Buraco Negro e pontuar.</p>
+    </header>
+
+    <main>
+        <div id="game-status">
+            <p><strong>Turno:</strong> <span id="current-player-display">Jogador 1 (Vermelho)</span></p>
+            <p><strong>Próximo Número a Jogar:</strong> <span id="next-number-display">1</span></p>
+            <p>
+                <button id="reset-button">Reiniciar Jogo</button>
+            </p>
+        </div>
+
+        <div id="pyramid-container" class="pyramid-grid">
+            </div>
+
+        <div id="game-results" class="hidden">
+            <h2>Fim de Jogo!</h2>
+            <p>O Círculo <span id="black-hole-id"></span> é o Buraco Negro!</p>
+
+            <h3>Pontuação Final (Soma dos Adjacentes ao Buraco Negro):</h3>
+            <p>
+                <span class="player-label-1">Jogador 1 (Vermelho):</span>
+                <span id="score-1">0</span> pontos
+            </p>
+            <p>
+                <span class="player-label-2">Jogador 2 (Azul):</span>
+                <span id="score-2">0</span> pontos
+            </p>
+            <h3 id="winner-message"></h3>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2025 - Implementação Front-end</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
