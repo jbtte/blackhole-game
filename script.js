@@ -111,10 +111,10 @@ function handleCircleClick(event) {
         gameCircles[index].value = currentNumber;
         circlesFilled++;
 
-        // Atualiza o DOM
+        // Atualiza o DOM: Apenas ADICIONAMOS classes, não removemos .circle
         circleElement.textContent = currentNumber;
         circleElement.classList.add('filled', `player-${currentPlayer}`);
-        circleElement.classList.remove('circle'); // Remove o estilo de clique
+        // circleElement.classList.remove('circle'); <--- Removido!
         
         // Passa o turno
         nextTurn();
