@@ -10,13 +10,15 @@ const RESET_BUTTON = document.getElementById('reset-button');
 
 // Estado do Jogo (State Management)
 let gameCircles = []; // Array de objetos para armazenar o estado de cada círculo
-let currentPlayer = 1; // 1 ou 2
-let currentNumber = 1; // Número que será colocado no próximo turno
+let currentPlayer = 1; // 1: Jogador 1 (Vermelho), 2: Jogador 2 (Azul)
 let circlesFilled = 0;
 let gameOver = false;
 
-// Mapa de adjacências (índices 0 a 20)
-// Este mapa define quais círculos (índices) são adjacentes a cada outro círculo.
+// Rastreia o próximo número para cada jogador individualmente (1 a 10)
+let nextNumberPlayer1 = 1;
+let nextNumberPlayer2 = 1;
+
+// Mapa de adjacências (índices 0 a 20) - Essencial para a regra do Buraco Negro
 const ADJACENCY_MAP = {
     // Linha 1 (1 círculo, índice 0)
     0: [1, 2],
@@ -34,6 +36,7 @@ const ADJACENCY_MAP = {
     18: [12, 13, 17, 19], 19: [13, 14, 18, 20], 20: [14, 19]
 };
 
+
 /**
  * Inicializa o estado do jogo e o DOM.
  */
@@ -41,16 +44,20 @@ function initGame() {
     gameCircles = Array.from({ length: TOTAL_CIRCLES }, (_, index) => ({
         id: index,
         row: getRow(index),
-        player: 0, // 0: vazio, 1: Jogador 1, 2: Jogador 2
+        player: 0, // 0: vazio
         value: null,
         isBlackHole: false,
         element: null // Referência ao elemento DOM
     }));
 
     currentPlayer = 1;
-    currentNumber = 1;
     circlesFilled = 0;
     gameOver = false;
+    
+    // Resetar o contador de número para cada jogador
+    nextNumberPlayer1 = 1;
+    nextNumberPlayer2 = 1;
+
     RESULTS_DIV.classList.add('hidden');
     
     generatePyramidDOM();
@@ -96,6 +103,17 @@ function generatePyramidDOM() {
 }
 
 /**
+ * Atualiza o display do jogador atual e do próximo número.
+ */
+function updateStatusDisplay() {
+    // Pega o número que o jogador ATUAL vai jogar
+    const nextNumber = currentPlayer === 1 ? nextNumberPlayer1 : nextNumberPlayer2;
+    
+    STATUS_DISPLAY.textContent = `Jogador ${currentPlayer} (${currentPlayer === 1 ? 'Vermelho' : 'Azul'})`;
+    NUMBER_DISPLAY.textContent = nextNumber;
+}
+
+/**
  * Lida com o clique em um círculo.
  * @param {Event} event - O evento de clique.
  */
@@ -106,17 +124,19 @@ function handleCircleClick(event) {
     const index = parseInt(circleElement.dataset.index);
 
     if (gameCircles[index].player === 0) { // Se o círculo estiver vazio
-        // Atualiza o estado
-        gameCircles[index].player = currentPlayer;
-        gameCircles[index].value = currentNumber;
-        circlesFilled++;
-
-        // Atualiza o DOM: Apenas ADICIONAMOS classes, não removemos .circle
-        circleElement.textContent = currentNumber;
-        circleElement.classList.add('filled', `player-${currentPlayer}`);
-        // circleElement.classList.remove('circle'); <--- Removido!
         
-        // Passa o turno
+        // 1. Determina o número a ser jogado com base no contador do jogador atual
+        const numberToPlay = currentPlayer === 1 ? nextNumberPlayer1 : nextNumberPlayer2;
+
+        // 2. Atualiza o estado
+        gameCircles[index].player = currentPlayer;
+        gameCircles[index].value = numberToPlay;
+        
+        // 3. Atualiza o DOM (Mantendo a classe 'circle' para formato)
+        circleElement.textContent = numberToPlay;
+        circleElement.classList.add('filled', `player-${currentPlayer}`);
+        
+        // 4. Passa o turno e incrementa o contador do jogador que acabou de jogar
         nextTurn();
     }
 }
@@ -125,26 +145,28 @@ function handleCircleClick(event) {
  * Avança para o próximo turno (próximo jogador e próximo número).
  */
 function nextTurn() {
-    if (circlesFilled < TOTAL_CIRCLES) {
-        // Alterna o jogador
-        currentPlayer = currentPlayer === 1 ? 2 : 1;
+    circlesFilled++; // A jogada foi feita
 
-        // Avança o número (de 1 a 10)
-        currentNumber = (currentNumber % MAX_NUMBER) + 1;
-        
-        updateStatusDisplay();
-    } else {
-        endGame();
+    // Incrementa o número do jogador que acabou de jogar (até o máximo de 10)
+    if (currentPlayer === 1 && nextNumberPlayer1 < MAX_NUMBER) {
+        nextNumberPlayer1++;
+    } else if (currentPlayer === 2 && nextNumberPlayer2 < MAX_NUMBER) {
+        nextNumberPlayer2++;
     }
+
+    // 1. Checa a condição de Fim de Jogo: 20 círculos preenchidos
+    if (circlesFilled >= 20) {
+        endGame();
+        return;
+    }
+
+    // 2. Alterna o jogador
+    currentPlayer = currentPlayer === 1 ? 2 : 1;
+    
+    // 3. Atualiza o display para mostrar o turno do NOVO jogador
+    updateStatusDisplay();
 }
 
-/**
- * Atualiza o display do jogador atual e do próximo número.
- */
-function updateStatusDisplay() {
-    STATUS_DISPLAY.textContent = `Jogador ${currentPlayer} (${currentPlayer === 1 ? 'Vermelho' : 'Azul'})`;
-    NUMBER_DISPLAY.textContent = currentNumber;
-}
 
 /**
  * Executa a lógica de pontuação no final do jogo.
@@ -156,16 +178,16 @@ function endGame() {
     const blackHole = gameCircles.find(c => c.player === 0);
     
     if (!blackHole) {
-        // Isso só aconteceria se o TOTAL_CIRCLES estivesse errado.
         console.error("Erro: Nenhum Buraco Negro encontrado.");
         return;
     }
 
+    // 2. Aplicar estilo do Buraco Negro
     blackHole.isBlackHole = true;
     blackHole.element.classList.add('black-hole');
-    blackHole.element.textContent = 'BH'; // Símbolo para o Buraco Negro
+    blackHole.element.textContent = 'BH'; 
     
-    // 2. Calcular a pontuação
+    // 3. Calcular a pontuação
     const blackHoleIndex = blackHole.id;
     const adjacentIndices = ADJACENCY_MAP[blackHoleIndex] || [];
     
@@ -174,7 +196,7 @@ function endGame() {
     
     adjacentIndices.forEach(index => {
         const adjacentCircle = gameCircles[index];
-        // O valor é 0 para o Buraco Negro (que não tem valor de jogada)
+        // Adiciona à pontuação apenas se for um círculo preenchido
         if (adjacentCircle.value !== null) { 
             if (adjacentCircle.player === 1) {
                 scorePlayer1 += adjacentCircle.value;
@@ -182,16 +204,17 @@ function endGame() {
                 scorePlayer2 += adjacentCircle.value;
             }
         }
-        // Opcional: Destacar os adjacentes
-        adjacentCircle.element.style.border = '5px solid black';
+        // Opcional: Destacar os adjacentes visualmente
+        adjacentCircle.element.style.border = '5px dashed black';
     });
 
-    // 3. Exibir Resultados
+    // 4. Exibir Resultados
     document.getElementById('black-hole-id').textContent = `ID ${blackHoleIndex}`;
     document.getElementById('score-1').textContent = scorePlayer1;
     document.getElementById('score-2').textContent = scorePlayer2;
 
     let winnerMessage;
+    // Quem tem MENOS pontos ganha
     if (scorePlayer1 < scorePlayer2) {
         winnerMessage = "🏆 Jogador 1 (Vermelho) VENCEU!";
     } else if (scorePlayer2 < scorePlayer1) {
