@@ -60,6 +60,7 @@ O código JavaScript (`script.js`) é organizado para clareza e manutenção:
 | `nextTurn()` | Lógica para alternar jogadores e avançar a contagem de 1 a 10. |
 | `endGame()` | Função que localiza o Buraco Negro, utiliza o `ADJACENCY_MAP` para calcular as pontuações e exibe o resultado. |
 
+
 ---
 
 ### 👤 Autor
