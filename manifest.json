@@ -2,7 +2,7 @@
   "name": "Buraco Negro - O Jogo",
   "short_name": "Buraco Negro",
   "description": "Jogo de tabuleiro em pirâmide para dois jogadores",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0e1a",

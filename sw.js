@@ -1,14 +1,14 @@
 const CACHE_NAME = 'buraco-negro-v2';
 const ASSETS = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/manifest.json',
-  '/blackhole.jpeg',
-  '/icons/favicon.png',
-  '/icons/buraco-negro-192.png',
-  '/icons/buraco-negro-512.png'
+  './',
+  './index.html',
+  './style.css',
+  './script.js',
+  './manifest.json',
+  './blackhole.jpeg',
+  './icons/favicon.png',
+  './icons/buraco-negro-192.png',
+  './icons/buraco-negro-512.png'
 ];
 
 self.addEventListener('install', event => {
