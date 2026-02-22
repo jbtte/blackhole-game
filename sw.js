@@ -5,7 +5,8 @@ const ASSETS = [
   '/style.css',
   '/script.js',
   '/manifest.json',
-  '/favicon.png'
+  '/favicon.png',
+  '/blackhole.jpeg'
 ];
 
 self.addEventListener('install', event => {
