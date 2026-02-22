@@ -1,8 +1,26 @@
 :root {
-    --player1-color: #e74c3c; /* Vermelho */
-    --player2-color: #3498db; /* Azul */
-    --black-hole-color: #2c3e50; /* Cinza Escuro */
-    --empty-color: #ecf0f1; /* Cinza Claro */
+    --player1-color: #e74c3c;
+    --player2-color: #3498db;
+    --bg: #0a0e1a;
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --card-border: rgba(255, 255, 255, 0.1);
+    --empty-bg: rgba(255, 255, 255, 0.08);
+    --empty-border: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.15); }
+    100% { transform: scale(1.08); }
+}
+
+@keyframes bh-pulse {
+    0%, 100% { box-shadow: 0 0 12px 4px rgba(140, 0, 255, 0.6), 0 0 24px 8px rgba(255, 255, 255, 0.1); }
+    50%       { box-shadow: 0 0 24px 8px rgba(140, 0, 255, 0.9), 0 0 40px 12px rgba(255, 255, 255, 0.2); }
+}
+
+* {
+    box-sizing: border-box;
 }
 
 body {
@@ -10,105 +28,131 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: #f4f4f4;
-    color: #333;
+    background-color: var(--bg);
+    color: #fff;
     margin: 0;
-    padding: 20px;
+    padding: 16px 8px;
+    min-height: 100vh;
 }
 
 header {
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+}
+
+header h1 {
+    font-size: 2rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    text-shadow: 0 0 16px rgba(140, 0, 255, 0.7), 0 0 32px rgba(52, 152, 219, 0.4);
+    margin: 0;
 }
 
 main {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    max-width: 600px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: 24px 20px;
+    border-radius: 16px;
+    max-width: 560px;
     width: 100%;
 }
 
 #game-status {
     margin-bottom: 20px;
-    padding: 15px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
+    padding: 14px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
     text-align: center;
+}
+
+#game-status p {
+    margin: 6px 0;
+}
+
+#game-status strong {
+    color: rgba(255, 255, 255, 0.6);
 }
 
 #pyramid-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px; /* Espaço entre as linhas */
-    margin-bottom: 30px;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 
 .pyramid-row {
     display: flex;
     justify-content: center;
-    gap: 10px; /* Espaço entre os círculos na mesma linha */
+    gap: 8px;
 }
 
-/* Estilo para cada círculo (aplicado a TODOS, preenchidos ou não) */
 .circle {
-    width: 50px;
-    height: 50px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.2em;
+    font-size: 1.1em;
     font-weight: bold;
     cursor: pointer;
-    border: 3px solid #333;
-    transition: all 0.2s ease-in-out;
-    background-color: var(--empty-color);
-    user-select: none; /* Evita seleção de texto */
-    /* Garante que o tamanho e o formato não mudem ao ser preenchido */
-    box-sizing: border-box; 
+    border: 2px solid var(--empty-border);
+    background: var(--empty-bg);
+    color: rgba(255, 255, 255, 0.7);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
 }
 
-/* Estilo para círculos VAZIOS (que podem ser clicados) */
-.circle:hover:not(.filled) {
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-    transform: scale(1.05);
+.circle:hover:not(.filled):not(.black-hole) {
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+    transform: scale(1.06);
 }
 
-/* Cores dos jogadores - Usamos !important para garantir que sobrescreva o background-color do .circle */
-.player-1 {
-    background-color: var(--player1-color) !important;
-    color: white;
-    border-color: var(--player1-color);
+.filled {
+    transform: scale(1.08);
+    animation: pop 0.15s ease-out forwards;
     cursor: default;
+}
+
+.player-1 {
+    background: linear-gradient(135deg, #e74c3c, #c0392b) !important;
+    border-color: #e74c3c;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(231, 76, 60, 0.4);
 }
 
 .player-2 {
-    background-color: var(--player2-color) !important;
-    color: white;
-    border-color: var(--player2-color);
+    background: linear-gradient(135deg, #3498db, #2980b9) !important;
+    border-color: #3498db;
+    color: #fff;
+    box-shadow: 0 0 10px rgba(52, 152, 219, 0.4);
+}
+
+.black-hole {
+    background: #000 !important;
+    border-color: rgba(140, 0, 255, 0.6);
+    color: #fff;
+    animation: bh-pulse 2s ease-in-out infinite;
     cursor: default;
 }
 
-/* Estilo do Buraco Negro (Preto para o BG e Branco para o Texto) */
-.black-hole {
-    background-color: var(--black-hole-color) !important; /* Cor preta/escura definida no :root */
-    color: white;
-    border-color: var(--black-hole-color);
-    box-shadow: 0 0 20px var(--black-hole-color);
-    /* Mantém o mesmo tamanho do circle, mas adiciona um efeito sutil se desejar */
-    transform: scale(1.0); 
+#game-results {
+    margin-top: 16px;
+    padding: 20px;
+    background: var(--card-bg);
+    border: 1px solid rgba(140, 0, 255, 0.4);
+    border-radius: 12px;
+    text-align: center;
 }
 
-/* Resultados */
-#game-results {
-    margin-top: 20px;
-    padding: 20px;
-    border: 2px dashed #333;
-    border-radius: 8px;
-    text-align: center;
+#game-results h2 {
+    margin-top: 0;
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 10px rgba(140, 0, 255, 0.5);
 }
 
 .hidden {
@@ -116,25 +160,61 @@ main {
 }
 
 #reset-button {
-    padding: 10px 15px;
-    background-color: #2ecc71;
-    color: white;
+    padding: 12px 28px;
+    background: linear-gradient(135deg, #2ecc71, #27ae60);
+    color: #fff;
     border: none;
-    border-radius: 4px;
+    border-radius: 20px;
     cursor: pointer;
     font-weight: bold;
+    font-size: 1em;
     margin-top: 10px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 #reset-button:hover {
-    background-color: #27ae60;
+    transform: scale(1.04);
+    box-shadow: 0 0 12px rgba(46, 204, 113, 0.5);
 }
 
-.player-label-1 { color: var(--player1-color); }
-.player-label-2 { color: var(--player2-color); }
+.player-label-1 {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.player-label-2 {
+    color: #3498db;
+    font-weight: bold;
+}
 
 #winner-message {
-    font-size: 1.5em;
+    font-size: 1.4em;
     font-weight: bold;
     margin-top: 10px;
+}
+
+footer {
+    margin-top: 20px;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.85em;
+}
+
+@media (max-width: 480px) {
+    .circle {
+        width: 52px;
+        height: 52px;
+        font-size: 0.95em;
+    }
+
+    .pyramid-row {
+        gap: 6px;
+    }
+
+    #pyramid-container {
+        gap: 6px;
+    }
+
+    header h1 {
+        font-size: 1.5rem;
+    }
 }

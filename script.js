@@ -59,7 +59,8 @@ function initGame() {
     nextNumberPlayer2 = 1;
 
     RESULTS_DIV.classList.add('hidden');
-    
+    NUMBER_DISPLAY.parentElement.style.display = '';
+
     generatePyramidDOM();
     updateStatusDisplay();
 }
@@ -173,7 +174,9 @@ function nextTurn() {
  */
 function endGame() {
     gameOver = true;
-    
+    STATUS_DISPLAY.textContent = 'Fim de Jogo!';
+    NUMBER_DISPLAY.parentElement.style.display = 'none';
+
     // 1. Encontrar o Buraco Negro (o único círculo não preenchido)
     const blackHole = gameCircles.find(c => c.player === 0);
     
@@ -209,7 +212,7 @@ function endGame() {
     });
 
     // 4. Exibir Resultados
-    document.getElementById('black-hole-id').textContent = `ID ${blackHoleIndex}`;
+    document.getElementById('black-hole-id').textContent = `ID ${blackHoleIndex + 1}`;
     document.getElementById('score-1').textContent = scorePlayer1;
     document.getElementById('score-2').textContent = scorePlayer2;
 
