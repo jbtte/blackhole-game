@@ -193,11 +193,13 @@ function triggerAI() {
     aiThinking = true;
     updateStatusDisplay();
 
+    const delay = difficulty === 'hard' ? 700 : 500;
     aiTimeout = setTimeout(() => {
         aiThinking = false;
         if (difficulty === 'easy')        aiMoveEasy();
         else if (difficulty === 'medium') aiMoveMedium();
-    }, 500);
+        else if (difficulty === 'hard')   aiMoveHard();
+    }, delay);
 }
 
 /**
@@ -243,6 +245,138 @@ function aiMoveMedium() {
     const chosen = candidates[Math.floor(Math.random() * candidates.length)];
 
     playAt(chosen.circle.id);
+}
+
+
+/**
+ * IA Difícil: minimax com alpha-beta pruning.
+ *
+ * Profundidade 6. Move ordering por exposição crescente melhora os cortes.
+ * p1Next/p2Next são passados como parâmetros para evitar desfazer globais.
+ */
+const MINIMAX_DEPTH = 6;
+
+function aiMoveHard() {
+    const emptyCircles = gameCircles.filter(c => c.player === 0);
+    if (emptyCircles.length === 0) return;
+
+    const ordered = orderMoves(emptyCircles);
+    let bestIndex = ordered[0].id;
+    let bestScore = -Infinity;
+
+    for (const circle of ordered) {
+        circle.player = 2;
+        circle.value = nextNumberPlayer2;
+        const newP2 = nextNumberPlayer2 < MAX_NUMBER ? nextNumberPlayer2 + 1 : nextNumberPlayer2;
+
+        const score = minimax(
+            MINIMAX_DEPTH - 1, circlesFilled + 1,
+            -Infinity, Infinity,
+            false, nextNumberPlayer1, newP2
+        );
+
+        circle.player = 0;
+        circle.value = null;
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestIndex = circle.id;
+        }
+    }
+
+    playAt(bestIndex);
+}
+
+/**
+ * Ordena círculos vazios por exposição crescente (menos vizinhos vazios = mais seguros).
+ * Movimentos melhores primeiro → mais cortes no alpha-beta.
+ */
+function orderMoves(circles) {
+    return [...circles].sort((a, b) => {
+        const aRisk = (ADJACENCY_MAP[a.id] || []).filter(ni => gameCircles[ni].player === 0).length;
+        const bRisk = (ADJACENCY_MAP[b.id] || []).filter(ni => gameCircles[ni].player === 0).length;
+        return aRisk - bRisk;
+    });
+}
+
+/**
+ * Minimax com alpha-beta.
+ * isMaximizing = true → vez do computador (player 2, quer score alto)
+ * isMaximizing = false → vez do humano    (player 1, quer score baixo)
+ * Score: humanDanger − aiDanger. Positivo = AI ganhando.
+ */
+function minimax(depth, filled, alpha, beta, isMaximizing, p1Next, p2Next) {
+    if (filled >= 20) return evaluateTerminal();
+    if (depth === 0)  return evaluateHeuristic();
+
+    const empties = gameCircles.filter(c => c.player === 0);
+    const ordered = orderMoves(empties);
+
+    if (isMaximizing) {
+        let best = -Infinity;
+        for (const circle of ordered) {
+            circle.player = 2;
+            circle.value = p2Next;
+            const newP2 = p2Next < MAX_NUMBER ? p2Next + 1 : p2Next;
+
+            const score = minimax(depth - 1, filled + 1, alpha, beta, false, p1Next, newP2);
+
+            circle.player = 0;
+            circle.value = null;
+
+            if (score > best)  best = score;
+            if (score > alpha) alpha = score;
+            if (beta <= alpha) break;
+        }
+        return best;
+    } else {
+        let best = Infinity;
+        for (const circle of ordered) {
+            circle.player = 1;
+            circle.value = p1Next;
+            const newP1 = p1Next < MAX_NUMBER ? p1Next + 1 : p1Next;
+
+            const score = minimax(depth - 1, filled + 1, alpha, beta, true, newP1, p2Next);
+
+            circle.player = 0;
+            circle.value = null;
+
+            if (score < best)  best = score;
+            if (score < beta)  beta = score;
+            if (beta <= alpha) break;
+        }
+        return best;
+    }
+}
+
+/** Avalia estado terminal: score exato baseado no Buraco Negro real. */
+function evaluateTerminal() {
+    const bh = gameCircles.find(c => c.player === 0);
+    if (!bh) return 0;
+    let scoreHuman = 0, scoreAI = 0;
+    (ADJACENCY_MAP[bh.id] || []).forEach(ni => {
+        const c = gameCircles[ni];
+        if (c.player === 1)      scoreHuman += c.value;
+        else if (c.player === 2) scoreAI    += c.value;
+    });
+    return scoreHuman - scoreAI;
+}
+
+/**
+ * Heurística para estados não-terminais.
+ * Exposição de um círculo = nº de vizinhos vazios (candidatos a BH que o expõem).
+ * danger = Σ(valor × exposição) por jogador.
+ */
+function evaluateHeuristic() {
+    let dangerHuman = 0, dangerAI = 0;
+    gameCircles.forEach(c => {
+        if (c.player === 0) return;
+        const exposure = (ADJACENCY_MAP[c.id] || [])
+            .filter(ni => gameCircles[ni].player === 0).length;
+        if (c.player === 1)      dangerHuman += c.value * exposure;
+        else if (c.player === 2) dangerAI    += c.value * exposure;
+    });
+    return dangerHuman - dangerAI;
 }
 
 
@@ -324,8 +458,9 @@ function setMode(mode) {
 
 function setDifficulty(diff) {
     difficulty = diff;
-    document.getElementById('btn-easy').classList.toggle('active', diff === 'easy');
+    document.getElementById('btn-easy').classList.toggle('active',   diff === 'easy');
     document.getElementById('btn-medium').classList.toggle('active', diff === 'medium');
+    document.getElementById('btn-hard').classList.toggle('active',   diff === 'hard');
     initGame();
 }
 
@@ -333,8 +468,9 @@ function setDifficulty(diff) {
 // Listeners
 document.getElementById('btn-pvp').addEventListener('click', () => setMode('pvp'));
 document.getElementById('btn-pvc').addEventListener('click', () => setMode('pvc'));
-document.getElementById('btn-easy').addEventListener('click', () => setDifficulty('easy'));
+document.getElementById('btn-easy').addEventListener('click',   () => setDifficulty('easy'));
 document.getElementById('btn-medium').addEventListener('click', () => setDifficulty('medium'));
+document.getElementById('btn-hard').addEventListener('click',   () => setDifficulty('hard'));
 RESET_BUTTON.addEventListener('click', initGame);
 
 // Inicia o jogo quando a página carrega
