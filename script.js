@@ -195,7 +195,8 @@ function triggerAI() {
 
     aiTimeout = setTimeout(() => {
         aiThinking = false;
-        if (difficulty === 'easy') aiMoveEasy();
+        if (difficulty === 'easy')        aiMoveEasy();
+        else if (difficulty === 'medium') aiMoveMedium();
     }, 500);
 }
 
@@ -207,6 +208,41 @@ function aiMoveEasy() {
     if (emptyCircles.length === 0) return;
     const chosen = emptyCircles[Math.floor(Math.random() * emptyCircles.length)];
     playAt(chosen.id);
+}
+
+/**
+ * IA Médio: heurística baseada em exposição ao Buraco Negro.
+ *
+ * Risco de jogar em X = quantidade de vizinhos vazios de X.
+ * Cada vizinho vazio é um candidato a Buraco Negro que exporia X.
+ * Para números altos, o AI é mais seletivo na escolha da posição.
+ */
+function aiMoveMedium() {
+    const emptyCircles = gameCircles.filter(c => c.player === 0);
+    if (emptyCircles.length === 0) return;
+
+    const numberToPlay = nextNumberPlayer2;
+
+    const scored = emptyCircles.map(circle => {
+        const emptyNeighbors = (ADJACENCY_MAP[circle.id] || [])
+            .filter(ni => gameCircles[ni].player === 0)
+            .length;
+        return { circle, risk: emptyNeighbors };
+    });
+
+    scored.sort((a, b) => a.risk - b.risk);
+
+    // Quanto maior o número a jogar, mais restrito é o pool de candidatos
+    let topFraction;
+    if (numberToPlay >= 7)      topFraction = 0.20;
+    else if (numberToPlay >= 5) topFraction = 0.35;
+    else                        topFraction = 0.55;
+
+    const topCount = Math.max(1, Math.ceil(scored.length * topFraction));
+    const candidates = scored.slice(0, topCount);
+    const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+
+    playAt(chosen.circle.id);
 }
 
 
@@ -276,7 +312,7 @@ function endGame() {
 }
 
 
-// --- Seleção de Modo ---
+// --- Seleção de Modo e Dificuldade ---
 
 function setMode(mode) {
     gameMode = mode;
@@ -286,10 +322,19 @@ function setMode(mode) {
     initGame();
 }
 
+function setDifficulty(diff) {
+    difficulty = diff;
+    document.getElementById('btn-easy').classList.toggle('active', diff === 'easy');
+    document.getElementById('btn-medium').classList.toggle('active', diff === 'medium');
+    initGame();
+}
+
 
 // Listeners
 document.getElementById('btn-pvp').addEventListener('click', () => setMode('pvp'));
 document.getElementById('btn-pvc').addEventListener('click', () => setMode('pvc'));
+document.getElementById('btn-easy').addEventListener('click', () => setDifficulty('easy'));
+document.getElementById('btn-medium').addEventListener('click', () => setDifficulty('medium'));
 RESET_BUTTON.addEventListener('click', initGame);
 
 // Inicia o jogo quando a página carrega
